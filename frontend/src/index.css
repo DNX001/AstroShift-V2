@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@import "tailwindcss";
+
+/* AstroBot — Dark Mission Scrollbar */
+
+.astrobot-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #334155 #020617;
+}
+
+.astrobot-scroll::-webkit-scrollbar {
+  width: 7px;
+}
+
+.astrobot-scroll::-webkit-scrollbar-track {
+  background: #020617;
+}
+
+.astrobot-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 999px;
+}
+
+.astrobot-scroll::-webkit-scrollbar-thumb:hover {
+  background: #0891b2;
+}
