@@ -12,12 +12,20 @@ function getApiUrl(path) {
 }
 
 async function apiRequest(path, options = {}) {
+  const headers = new Headers(options.headers ?? {});
+
+  // Add JSON headers only when sending a JSON string.
+  // This also keeps future FormData uploads compatible.
+  if (
+    typeof options.body === "string" &&
+    !headers.has("Content-Type")
+  ) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(getApiUrl(path), {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!response.ok) {
@@ -29,13 +37,12 @@ async function apiRequest(path, options = {}) {
   return response.json();
 }
 
-// Check whether Sneha's FastAPI server is running.
+// Check whether Sneha's FastAPI backend is running.
 export async function checkBackendHealth() {
   return apiRequest("/api/health");
 }
 
 // Send a message to AstroBot.
-// The AI provider's API keys remain on the backend.
 export async function sendAstroBotMessage(
   message,
   history = [],
@@ -66,11 +73,7 @@ export async function sendAstroBotMessage(
     throw new Error("Invalid AstroBot response.");
   }
 
-  // Current backend returns HTTP 200 even when Groq fails.
-  // Treat its known fallback message as an AI failure.
-  if (
-    /astrobot telemetry offline/i.test(data.reply)
-  ) {
+  if (/astrobot telemetry offline/i.test(data.reply)) {
     throw new Error(
       "The AstroBot AI provider is currently unavailable."
     );
@@ -79,7 +82,44 @@ export async function sendAstroBotMessage(
   return data.reply;
 }
 
-// Fetch the image-pair data for Trina's Blink Comparator.
+// Search for a celestial target by name.
+// Backend contract: GET /api/search?query=<target name>
+export async function searchCelestialTarget(query) {
+  const targetName =
+    typeof query === "string" ? query.trim() : "";
+
+  if (!targetName) {
+    throw new Error(
+      "Enter a celestial target name to search."
+    );
+  }
+
+  const response = await apiRequest(
+    `/api/search?query=${encodeURIComponent(targetName)}`
+  );
+
+  const target = response?.data;
+
+  if (
+    response?.status !== "success" ||
+    !target ||
+    typeof target.query !== "string" ||
+    typeof target.ra !== "number" ||
+    !Number.isFinite(target.ra) ||
+    typeof target.dec !== "number" ||
+    !Number.isFinite(target.dec) ||
+    typeof target.formatted !== "string"
+  ) {
+    throw new Error(
+      "The backend returned an invalid celestial search response."
+    );
+  }
+
+  return target;
+}
+
+// Legacy image-pair helper.
+// Pending alignment with Sneha's new FITS-upload API.
 export async function fetchBlinkData(
   datasetId = "spherex-01"
 ) {
