@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { sendAstroBotMessage } from "../services/astroshiftApi";
+import { checkBackendHealth, sendAstroBotMessage } from "../services/astroshiftApi";
 import AstroBotMarkdown from "./AstroBotMarkdown";
 
 // --------------------------------------------------
@@ -22,6 +22,7 @@ export default function AstroBotDrawer() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("idle");
+  const [backendStatus, setBackendStatus] = useState("checking");
   const [error, setError] = useState("");
   const [copiedMessageIndex, setCopiedMessageIndex] = useState(null);
 
@@ -38,6 +39,31 @@ export default function AstroBotDrawer() {
       inputRef.current?.focus({ preventScroll: true });
     }
   }, [isOpen]);
+
+  // --------------------------------------------------
+  // CHECK LIVE BACKEND HEALTH
+  // --------------------------------------------------
+
+  useEffect(() => {
+    let isActive = true;
+
+    checkBackendHealth()
+      .then((health) => {
+        if (!isActive) return;
+
+        setBackendStatus(
+          health?.status === "healthy" ? "online" : "offline"
+        );
+      })
+      .catch(() => {
+        if (!isActive) return;
+        setBackendStatus("offline");
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   // --------------------------------------------------
   // AUTO-SCROLL
@@ -335,6 +361,35 @@ export default function AstroBotDrawer() {
                 <p className="mt-1 text-xs text-slate-400">
                   ASTROSHIFT // MISSION ASSISTANT
                 </p>
+
+                <div className="mt-2 flex items-center gap-2 text-[10px]">
+                  <span
+                    aria-hidden="true"
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      backendStatus === "online"
+                        ? "bg-emerald-400"
+                        : backendStatus === "offline"
+                          ? "bg-red-400"
+                          : "animate-pulse bg-amber-400"
+                    }`}
+                  />
+
+                  <span
+                    className={
+                      backendStatus === "online"
+                        ? "text-emerald-300"
+                        : backendStatus === "offline"
+                          ? "text-red-300"
+                          : "text-amber-300"
+                    }
+                  >
+                    {backendStatus === "online"
+                      ? "BACKEND ONLINE"
+                      : backendStatus === "offline"
+                        ? "BACKEND OFFLINE"
+                        : "CHECKING BACKEND"}
+                  </span>
+                </div>
               </div>
 
               <span
