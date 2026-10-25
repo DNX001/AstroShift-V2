@@ -1,4 +1,3 @@
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function getApiUrl(path) {
@@ -15,7 +14,7 @@ async function apiRequest(path, options = {}) {
   const headers = new Headers(options.headers ?? {});
 
   // Add JSON headers only when sending a JSON string.
-  // This also keeps future FormData uploads compatible.
+  // FormData uploads must let the browser set Content-Type.
   if (
     typeof options.body === "string" &&
     !headers.has("Content-Type")
@@ -83,7 +82,7 @@ export async function sendAstroBotMessage(
 }
 
 // Search for a celestial target by name.
-// Backend contract: GET /api/search?query=<target name>
+// Backend: GET /api/search?query=<target name>
 export async function searchCelestialTarget(query) {
   const targetName =
     typeof query === "string" ? query.trim() : "";
@@ -118,24 +117,41 @@ export async function searchCelestialTarget(query) {
   return target;
 }
 
-// Legacy image-pair helper.
-// Pending alignment with Sneha's new FITS-upload API.
-export async function fetchBlinkData(
-  datasetId = "spherex-01"
-) {
+// Upload two FITS files for Blink Comparator alignment.
+// Backend fields: file_a, file_b
+// Returns: frame_a_b64, frame_b_aligned_b64,
+// plus image_a, image_b, and metadata.
+export async function fetchBlinkData(fileA, fileB) {
+  if (
+    !fileA ||
+    typeof fileA.arrayBuffer !== "function" ||
+    !fileB ||
+    typeof fileB.arrayBuffer !== "function"
+  ) {
+    throw new Error(
+      "Please provide both Frame A and Frame B FITS files."
+    );
+  }
+
+  const formData = new FormData();
+
+  formData.append("file_a", fileA);
+  formData.append("file_b", fileB);
+
   const data = await apiRequest("/api/blink-data", {
     method: "POST",
-    body: JSON.stringify({
-      dataset_id: datasetId,
-    }),
+    body: formData,
   });
 
   if (
-    typeof data.image_a !== "string" ||
-    typeof data.image_b !== "string"
+    data?.status !== "success" ||
+    typeof data.frame_a_b64 !== "string" ||
+    !data.frame_a_b64 ||
+    typeof data.frame_b_aligned_b64 !== "string" ||
+    !data.frame_b_aligned_b64
   ) {
     throw new Error(
-      "The backend did not provide valid image references."
+      "The backend did not return valid aligned image frames."
     );
   }
 
