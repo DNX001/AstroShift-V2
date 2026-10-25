@@ -15,7 +15,7 @@ function formatFileSize(bytes) {
   return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
 }
 
-export default function FitsUploadPanel() {
+export default function FitsUploadPanel({ onResult }) {
   const [fileA, setFileA] = useState(null);
   const [fileB, setFileB] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,7 +25,9 @@ export default function FitsUploadPanel() {
   function handleFileSelection(event, setFile, frameName) {
     const selectedFile = event.target.files?.[0] ?? null;
 
+    // Clear previous results when either file selection changes.
     setResult(null);
+    onResult?.(null);
 
     if (!selectedFile) {
       setFile(null);
@@ -57,10 +59,14 @@ export default function FitsUploadPanel() {
     setIsUploading(true);
     setError("");
     setResult(null);
+    onResult?.(null);
 
     try {
       const data = await fetchBlinkData(fileA, fileB);
+
+      // Keep the existing preview and notify the parent component.
       setResult(data);
+      onResult?.(data);
     } catch (requestError) {
       setError(
         requestError instanceof Error
@@ -151,7 +157,9 @@ export default function FitsUploadPanel() {
           disabled={isUploading || !fileA || !fileB}
           className="w-full rounded-lg bg-cyan-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          {isUploading ? "PROCESSING FITS FRAMES..." : "UPLOAD & ALIGN FRAMES"}
+          {isUploading
+            ? "PROCESSING FITS FRAMES..."
+            : "UPLOAD & ALIGN FRAMES"}
         </button>
 
         <p className="text-xs leading-relaxed text-slate-500">
@@ -161,7 +169,10 @@ export default function FitsUploadPanel() {
       </form>
 
       {isUploading && (
-        <p role="status" className="mt-5 animate-pulse text-sm text-cyan-300">
+        <p
+          role="status"
+          className="mt-5 animate-pulse text-sm text-cyan-300"
+        >
           Uploading observations and aligning the star fields...
         </p>
       )}
@@ -174,6 +185,7 @@ export default function FitsUploadPanel() {
           <p className="text-xs font-bold tracking-wider text-red-300">
             PROCESSING FAILED
           </p>
+
           <p className="mt-2 break-words text-sm text-red-200">
             {error}
           </p>
