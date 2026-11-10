@@ -1,3 +1,4 @@
+
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 function getApiUrl(path) {
@@ -42,6 +43,7 @@ export async function checkBackendHealth() {
 }
 
 // Send a message to AstroBot.
+// Supports both the old "reply" and new "response" formats.
 export async function sendAstroBotMessage(
   message,
   history = [],
@@ -65,20 +67,24 @@ export async function sendAstroBotMessage(
     body: JSON.stringify(body),
   });
 
-  if (
-    typeof data.reply !== "string" ||
-    !data.reply.trim()
-  ) {
+  // AstroBot V2 uses "response".
+  // The previous backend used "reply".
+  const reply = [data?.response, data?.reply].find(
+    (value) =>
+      typeof value === "string" && value.trim().length > 0
+  );
+
+  if (!reply) {
     throw new Error("Invalid AstroBot response.");
   }
 
-  if (/astrobot telemetry offline/i.test(data.reply)) {
+  if (/astrobot telemetry offline/i.test(reply)) {
     throw new Error(
       "The AstroBot AI provider is currently unavailable."
     );
   }
 
-  return data.reply;
+  return reply;
 }
 
 // Search for a celestial target by name.

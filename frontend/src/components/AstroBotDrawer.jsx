@@ -1,5 +1,9 @@
+
 import { useEffect, useRef, useState } from "react";
-import { checkBackendHealth, sendAstroBotMessage } from "../services/astroshiftApi";
+import {
+  checkBackendHealth,
+  sendAstroBotMessage,
+} from "../services/astroshiftApi";
 import AstroBotMarkdown from "./AstroBotMarkdown";
 
 // --------------------------------------------------
@@ -51,12 +55,28 @@ export default function AstroBotDrawer() {
       .then((health) => {
         if (!isActive) return;
 
+        // Support both old and new backend health formats.
+        // Old backend: { status: "healthy" }
+        // AstroBot V2: { status: "ok" }
+
+        const healthStatus = String(
+          health?.status ?? ""
+        ).toLowerCase();
+
         setBackendStatus(
-          health?.status === "healthy" ? "online" : "offline"
+          healthStatus === "healthy" || healthStatus === "ok"
+            ? "online"
+            : "offline"
         );
       })
-      .catch(() => {
+      .catch((healthError) => {
         if (!isActive) return;
+
+        console.error(
+          "Backend health check failed:",
+          healthError
+        );
+
         setBackendStatus("offline");
       });
 
@@ -361,6 +381,8 @@ export default function AstroBotDrawer() {
                 <p className="mt-1 text-xs text-slate-400">
                   ASTROSHIFT // MISSION ASSISTANT
                 </p>
+
+                {/* Live backend health indicator */}
 
                 <div className="mt-2 flex items-center gap-2 text-[10px]">
                   <span
