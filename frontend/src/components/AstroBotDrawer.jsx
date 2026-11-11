@@ -16,7 +16,13 @@ const welcomeMessage = {
     "Welcome aboard AstroShift! I'm AstroBot, your AI astronomy companion. Ask me about SPHEREx, celestial objects, or the science behind our mission.",
 };
 
-export default function AstroBotDrawer() {
+// --------------------------------------------------
+// ASTROBOT COMPONENT
+// --------------------------------------------------
+
+export default function AstroBotDrawer({ mode = "drawer" }) {
+  const isWorkspace = mode === "workspace";
+
   // --------------------------------------------------
   // COMPONENT STATE
   // --------------------------------------------------
@@ -35,14 +41,14 @@ export default function AstroBotDrawer() {
   const sendingRef = useRef(false);
 
   // --------------------------------------------------
-  // AUTO-FOCUS MESSAGE INPUT WHEN DRAWER OPENS
+  // AUTO-FOCUS MESSAGE INPUT
   // --------------------------------------------------
 
   useEffect(() => {
-    if (isOpen) {
+    if (isWorkspace || isOpen) {
       inputRef.current?.focus({ preventScroll: true });
     }
-  }, [isOpen]);
+  }, [isOpen, isWorkspace]);
 
   // --------------------------------------------------
   // CHECK LIVE BACKEND HEALTH
@@ -90,18 +96,23 @@ export default function AstroBotDrawer() {
   // --------------------------------------------------
 
   useEffect(() => {
-    if (isOpen) {
+    if (isWorkspace || isOpen) {
       bottomRef.current?.scrollIntoView({
         behavior: "smooth",
       });
     }
-  }, [messages, isTyping, error, isOpen]);
+  }, [messages, isTyping, error, isOpen, isWorkspace]);
 
   // --------------------------------------------------
   // CLOSE DRAWER WITH ESCAPE
   // --------------------------------------------------
 
   useEffect(() => {
+    // Escape closes the floating drawer only.
+    // It must not hide the dedicated workspace.
+
+    if (isWorkspace) return undefined;
+
     function handleEscape(event) {
       if (event.key === "Escape") {
         setIsOpen(false);
@@ -113,7 +124,7 @@ export default function AstroBotDrawer() {
     return () => {
       document.removeEventListener("keydown", handleEscape);
     };
-  }, []);
+  }, [isWorkspace]);
 
   // --------------------------------------------------
   // SEND MESSAGE TO ASTROSHIFT BACKEND
@@ -342,30 +353,53 @@ export default function AstroBotDrawer() {
     messages[messages.length - 1]?.role === "user";
 
   // --------------------------------------------------
+  // PANEL STYLING
+  // --------------------------------------------------
+
+  const panelClassName = isWorkspace
+    ? "relative z-0 flex h-[min(72vh,760px)] min-h-[520px] w-full flex-col overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0b141d] text-white shadow-2xl shadow-black/20"
+    : "fixed bottom-20 left-4 right-4 z-50 flex h-[min(70vh,560px)] flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-slate-950 text-white shadow-2xl shadow-cyan-950/40 sm:left-auto sm:right-5 sm:w-[390px]";
+
+  // --------------------------------------------------
   // ASTROBOT INTERFACE
   // --------------------------------------------------
 
   return (
     <>
-      {/* Floating AstroBot launcher */}
+      {/* ----------------------------------------
+          FLOATING ASTROBOT LAUNCHER
+          Hidden in workspace mode
+      ---------------------------------------- */}
 
-      <button
-        type="button"
-        onClick={() => setIsOpen((previous) => !previous)}
-        aria-expanded={isOpen}
-        aria-controls="astrobot-panel"
-        className="fixed bottom-5 right-5 z-50 rounded-full border border-cyan-400/40 bg-cyan-400 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-300"
-      >
-        {isOpen ? "Close AstroBot" : "✦ AstroBot"}
-      </button>
+      {!isWorkspace && (
+        <button
+          type="button"
+          onClick={() => setIsOpen((previous) => !previous)}
+          aria-expanded={isOpen}
+          aria-controls="astrobot-panel"
+          className="fixed bottom-5 right-5 z-50 rounded-full border border-cyan-400/40 bg-cyan-400 px-5 py-3 font-semibold text-slate-950 shadow-lg shadow-cyan-500/20 transition hover:bg-cyan-300"
+        >
+          {isOpen ? "Close AstroBot" : "✦ AstroBot"}
+        </button>
+      )}
 
-      {/* AstroBot chat drawer */}
+      {/* ----------------------------------------
+          ASTROBOT CHAT PANEL
+      ---------------------------------------- */}
 
-      {isOpen && (
+      {(isWorkspace || isOpen) && (
         <section
-          id="astrobot-panel"
-          aria-label="AstroBot chat"
-          className="fixed bottom-20 left-4 right-4 z-50 flex h-[min(70vh,560px)] flex-col overflow-hidden rounded-2xl border border-cyan-500/30 bg-slate-950 text-white shadow-2xl shadow-cyan-950/40 sm:left-auto sm:right-5 sm:w-[390px]"
+          id={
+            isWorkspace
+              ? "astrobot-workspace-panel"
+              : "astrobot-panel"
+          }
+          aria-label={
+            isWorkspace
+              ? "AstroBot workspace"
+              : "AstroBot chat"
+          }
+          className={panelClassName}
         >
           {/* ----------------------------------------
               CHAT HEADER
