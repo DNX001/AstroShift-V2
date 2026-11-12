@@ -1,4 +1,6 @@
 
+import { lazy, Suspense } from "react";
+
 import {
   Navigate,
   Route,
@@ -13,20 +15,23 @@ import Observatory from "./pages/Observatory";
 import ScienceLab from "./pages/ScienceLab";
 import AstroBotWorkspace from "./pages/AstroBotWorkspace";
 
+// Load the heavy 3D environment only when requested.
+const CosmicPreview = lazy(
+  () => import("./pages/CosmicPreview")
+);
+
 function App() {
   return (
     <Routes>
 
-      {/* Shared application layout */}
+      {/* Main scientific application */}
       <Route path="/" element={<AppShell />}>
 
-        {/* Default workspace */}
         <Route
           index
           element={<MissionControl />}
         />
 
-        {/* Scientific workspaces */}
         <Route
           path="targets"
           element={<TargetExplorer />}
@@ -42,7 +47,6 @@ function App() {
           element={<ScienceLab />}
         />
 
-        {/* Dedicated AI workspace */}
         <Route
           path="astrobot"
           element={<AstroBotWorkspace />}
@@ -50,7 +54,23 @@ function App() {
 
       </Route>
 
-      {/* Unknown URLs return to Mission Control */}
+      {/* Independent full-screen cosmic experience */}
+      <Route
+        path="/cosmos-preview"
+        element={
+          <Suspense
+            fallback={
+              <div className="flex min-h-screen items-center justify-center bg-[#02030a] font-mono text-xs tracking-[0.2em] text-[#8ce7f5]">
+                INITIALIZING COSMOS ENGINE...
+              </div>
+            }
+          >
+            <CosmicPreview />
+          </Suspense>
+        }
+      />
+
+      {/* Unknown URLs */}
       <Route
         path="*"
         element={<Navigate to="/" replace />}
