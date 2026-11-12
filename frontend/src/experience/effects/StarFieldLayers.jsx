@@ -3,9 +3,8 @@ import StarField from "./StarField";
 
 export default function StarFieldLayers() {
   return (
-    <group>
-
-      {/* Distant stars: slow movement */}
+    <>
+      {/* Far star layer */}
       <StarField
         count={1800}
         width={190}
@@ -18,7 +17,7 @@ export default function StarFieldLayers() {
         seed={11}
       />
 
-      {/* Mid-distance stars */}
+      {/* Middle star layer */}
       <StarField
         count={1400}
         width={150}
@@ -31,7 +30,7 @@ export default function StarFieldLayers() {
         seed={29}
       />
 
-      {/* Nearby stars: faster parallax */}
+      {/* Close travelling particles */}
       <StarField
         count={650}
         width={105}
@@ -43,7 +42,6 @@ export default function StarFieldLayers() {
         opacity={0.9}
         seed={47}
       />
-
-    </group>
+    </>
   );
 }

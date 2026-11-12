@@ -11,17 +11,55 @@ import CosmicScene from "../experience/scenes/CosmicScene";
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ==========================================
+// REUSABLE CELESTIAL TYPOGRAPHY AURA
+// ==========================================
+
+function CelestialAura({ auraRef }) {
+  return (
+    <div
+      ref={auraRef}
+      aria-hidden="true"
+      className="pointer-events-none absolute -inset-x-24 -inset-y-20 z-0 opacity-0 mix-blend-screen"
+    >
+      {/* Emerald plasma cloud */}
+      <div className="absolute inset-0 rounded-[50%] bg-[radial-gradient(ellipse_at_center,rgba(61,255,187,0.19)_0%,rgba(24,220,162,0.075)_42%,transparent_74%)] blur-2xl" />
+
+      {/* Horizontal energy filament */}
+      <div className="absolute left-[7%] right-[7%] top-1/2 h-px bg-gradient-to-r from-transparent via-emerald-200/65 to-transparent shadow-[0_0_20px_rgba(65,255,185,0.72)]" />
+
+      {/* Plasma boundary */}
+      <div className="absolute left-[18%] right-[18%] top-[13%] bottom-[13%] rounded-[48%] border border-emerald-300/15 blur-[2px]" />
+
+      {/* Energy flare */}
+      <div className="absolute left-[22%] top-[18%] h-3 w-3 rounded-full bg-emerald-200/25 blur-md shadow-[0_0_24px_rgba(65,255,185,0.8)]" />
+    </div>
+  );
+}
+
 export default function CosmicPreview() {
   const journeyRef = useRef(null);
 
-  const approachSectionRef = useRef(null);
-
+  // Chapter content
   const awakeningCopyRef = useRef(null);
   const approachCopyRef = useRef(null);
+  const nebulaCopyRef = useRef(null);
+  const spectralCopyRef = useRef(null);
+
+  // Chapter energy fields
+  const awakeningAuraRef = useRef(null);
+  const approachAuraRef = useRef(null);
+  const nebulaAuraRef = useRef(null);
+  const spectralAuraRef = useRef(null);
+
   const scrollCueRef = useRef(null);
 
-  // Shared with the Three.js camera without React re-renders.
+  // Shared with the Three.js camera.
   const progressRef = useRef(0);
+
+  // ======================================
+  // LENIS + MASTER CINEMATIC TIMELINE
+  // ======================================
 
   useLayoutEffect(() => {
     const root = journeyRef.current;
@@ -32,7 +70,6 @@ export default function CosmicPreview() {
       "(prefers-reduced-motion: reduce)"
     ).matches;
 
-    // Smooth scroll and GSAP share one animation clock.
     const lenis = prefersReducedMotion
       ? null
       : new Lenis({
@@ -58,22 +95,68 @@ export default function CosmicPreview() {
     }
 
     const context = gsap.context(() => {
-      // --------------------------------------
-      // CAMERA PROGRESS
-      // --------------------------------------
+
+      // ======================================
+      // INITIAL CONTENT STATES
+      // ======================================
+
+      gsap.set(awakeningCopyRef.current, {
+        autoAlpha: 1,
+        y: 0,
+        filter: "blur(0px)",
+      });
+
+      gsap.set(awakeningAuraRef.current, {
+        autoAlpha: 0.14,
+        scale: 1,
+        filter: "blur(18px)",
+      });
+
+      gsap.set(approachCopyRef.current, {
+        autoAlpha: 0,
+        y: 36,
+        filter: "blur(12px)",
+      });
+
+      gsap.set(approachAuraRef.current, {
+        autoAlpha: 0,
+        scale: 0.84,
+        filter: "blur(28px)",
+      });
+
+      gsap.set(nebulaCopyRef.current, {
+        autoAlpha: 0,
+        y: 38,
+        filter: "blur(8px)",
+      });
+
+      gsap.set(nebulaAuraRef.current, {
+        autoAlpha: 0,
+        scale: 0.82,
+        filter: "blur(28px)",
+      });
+
+      gsap.set(spectralCopyRef.current, {
+        autoAlpha: 0,
+        y: 40,
+        filter: "blur(12px)",
+      });
+
+      gsap.set(spectralAuraRef.current, {
+        autoAlpha: 0,
+        scale: 0.80,
+        filter: "blur(28px)",
+      });
+
+      // ======================================
+      // MASTER SCROLL TIMELINE
+      // ======================================
 
       const cameraState = {
         progress: 0,
       };
 
-      gsap.to(cameraState, {
-        progress: 1,
-        ease: "none",
-
-        onUpdate: () => {
-          progressRef.current = cameraState.progress;
-        },
-
+      const master = gsap.timeline({
         scrollTrigger: {
           trigger: root,
           start: "top top",
@@ -83,66 +166,242 @@ export default function CosmicPreview() {
         },
       });
 
-      // --------------------------------------
-      // CHAPTER 001 — AWAKENING
-      // --------------------------------------
-
-      gsap.fromTo(
-        awakeningCopyRef.current,
+      // Camera and typography share the same
+      // continuous scroll progress.
+      master.to(
+        cameraState,
         {
-          autoAlpha: 1,
-          y: 0,
-        },
-        {
-          autoAlpha: 0,
-          y: -65,
+          progress: 1,
+          duration: 1,
           ease: "none",
 
-          scrollTrigger: {
-            trigger: approachSectionRef.current,
-            start: "top bottom",
-            end: "top 30%",
-            scrub: true,
+          onUpdate: () => {
+            progressRef.current =
+              cameraState.progress;
           },
-        }
+        },
+        0
       );
 
-      // --------------------------------------
-      // CHAPTER 002 — THE APPROACH
-      // --------------------------------------
+      // ======================================
+      // CHAPTER 001 — AWAKENING
+      // ======================================
 
-      gsap.fromTo(
+      master.to(
+        awakeningCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: -36,
+          filter: "blur(8px)",
+          duration: 0.06,
+          ease: "none",
+        },
+        0.11
+      );
+
+      master.to(
+        awakeningAuraRef.current,
+        {
+          autoAlpha: 0.04,
+          scale: 1.10,
+          filter: "blur(26px)",
+          duration: 0.09,
+          ease: "none",
+        },
+        0.11
+      );
+
+      // ======================================
+      // CHAPTER 002 — THE APPROACH
+      // ======================================
+
+      master.fromTo(
+        approachAuraRef.current,
+        {
+          autoAlpha: 0,
+          scale: 0.82,
+          filter: "blur(26px)",
+        },
+        {
+          autoAlpha: 0.19,
+          scale: 1,
+          filter: "blur(15px)",
+          duration: 0.07,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.17
+      );
+
+      master.fromTo(
         approachCopyRef.current,
         {
           autoAlpha: 0,
-          y: 65,
+          y: 36,
+          filter: "blur(12px)",
         },
         {
           autoAlpha: 1,
           y: 0,
+          filter: "blur(0px)",
+          duration: 0.08,
           ease: "none",
-
-          scrollTrigger: {
-            trigger: approachSectionRef.current,
-            start: "top 88%",
-            end: "top 30%",
-            scrub: true,
-          },
-        }
+          immediateRender: false,
+        },
+        0.21
       );
 
-      // Scroll instruction disappears naturally.
-      gsap.to(scrollCueRef.current, {
-        autoAlpha: 0,
-        ease: "none",
-
-        scrollTrigger: {
-          trigger: approachSectionRef.current,
-          start: "top bottom",
-          end: "top 70%",
-          scrub: true,
+      master.to(
+        approachCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: -34,
+          filter: "blur(9px)",
+          duration: 0.06,
+          ease: "none",
         },
-      });
+        0.41
+      );
+
+      master.to(
+        approachAuraRef.current,
+        {
+          autoAlpha: 0.04,
+          scale: 1.10,
+          filter: "blur(25px)",
+          duration: 0.08,
+          ease: "none",
+        },
+        0.41
+      );
+
+      // ======================================
+      // CHAPTER 003 — THROUGH THE NEBULA
+      // ======================================
+
+      // First, the emerald aura starts forming
+      // while the distant nebula is emerging.
+      master.fromTo(
+        nebulaAuraRef.current,
+        {
+          autoAlpha: 0,
+          scale: 0.78,
+          filter: "blur(28px)",
+        },
+        {
+          autoAlpha: 0.24,
+          scale: 1,
+          filter: "blur(15px)",
+          duration: 0.065,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.55
+      );
+
+      // Text arrives earlier than before.
+      // Faster, sharper entrance so it settles properly.
+      master.fromTo(
+        nebulaCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: 32,
+          filter: "blur(8px)",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.045,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.59
+      );
+
+      // IMPORTANT:
+      // Keep the text fully visible through most of
+      // the nebula chapter. It should not immediately
+      // dissolve after appearing.
+      master.to(
+        nebulaCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: -34,
+          filter: "blur(7px)",
+          duration: 0.04,
+          ease: "none",
+        },
+        0.81
+      );
+
+      // Its emerald energy field recedes more gradually.
+      master.to(
+        nebulaAuraRef.current,
+        {
+          autoAlpha: 0.035,
+          scale: 1.13,
+          filter: "blur(27px)",
+          duration: 0.055,
+          ease: "none",
+        },
+        0.805
+      );
+
+      // ======================================
+      // CHAPTER 004 — BEYOND VISIBLE LIGHT
+      // ======================================
+
+      // Spectral aura starts as Chapter 003 dissolves.
+      master.fromTo(
+        spectralAuraRef.current,
+        {
+          autoAlpha: 0,
+          scale: 0.78,
+          filter: "blur(30px)",
+        },
+        {
+          autoAlpha: 0.25,
+          scale: 1,
+          filter: "blur(15px)",
+          duration: 0.08,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.845
+      );
+
+      // Scene 004 typography appears while the
+      // spectral curtains and celestial reveal continue.
+      master.fromTo(
+        spectralCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: 36,
+          filter: "blur(10px)",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.10,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.88
+      );
+
+      // Opening scroll cue.
+      master.to(
+        scrollCueRef.current,
+        {
+          autoAlpha: 0,
+          y: 12,
+          duration: 0.06,
+          ease: "none",
+        },
+        0.10
+      );
 
     }, root);
 
@@ -153,7 +412,10 @@ export default function CosmicPreview() {
 
       if (lenis) {
         gsap.ticker.remove(updateLenis);
+
+        lenis.off("scroll", onLenisScroll);
         lenis.destroy();
+
         gsap.ticker.lagSmoothing(500, 33);
       }
 
@@ -164,23 +426,23 @@ export default function CosmicPreview() {
   return (
     <main
       ref={journeyRef}
-      className="relative isolate min-h-[300vh] w-full overflow-clip bg-[#02030a] text-white"
+      className="relative isolate min-h-[700vh] w-full overflow-clip bg-[#02030a] text-white"
     >
 
       {/* ======================================
-          FIXED 3D ENVIRONMENT
+          FIXED THREE-DIMENSIONAL ENVIRONMENT
       ====================================== */}
 
       <div
         className="pointer-events-none fixed inset-0 z-0"
-        aria-label="Animated deep-space environment"
+        aria-label="Immersive animated cosmic environment"
       >
         <Canvas
           camera={{
             position: [0, 0, 5],
             fov: 65,
             near: 0.1,
-            far: 500,
+            far: 2600,
           }}
           dpr={[1, 1.5]}
           gl={{
@@ -197,7 +459,9 @@ export default function CosmicPreview() {
             </div>
           }
         >
-          <CosmicScene progressRef={progressRef} />
+          <CosmicScene
+            progressRef={progressRef}
+          />
         </Canvas>
       </div>
 
@@ -207,12 +471,12 @@ export default function CosmicPreview() {
 
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-[#02030a]/40 via-transparent to-[#02030a]/65"
+        className="pointer-events-none fixed inset-0 z-10 bg-gradient-to-b from-[#02030a]/35 via-transparent to-[#02030a]/60"
       />
 
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(2,3,10,0.38)_100%)]"
+        className="pointer-events-none fixed inset-0 z-10 bg-[radial-gradient(ellipse_at_center,transparent_25%,rgba(2,3,10,0.32)_100%)]"
       />
 
       {/* ======================================
@@ -261,37 +525,39 @@ export default function CosmicPreview() {
 
         </div>
 
-        <div
-          ref={awakeningCopyRef}
-          className="relative z-20 max-w-3xl p-6 pb-14 sm:p-9 sm:pb-16 lg:p-12 lg:pb-20"
-        >
+        <div className="relative z-20 max-w-3xl p-6 pb-14 sm:p-9 sm:pb-16 lg:p-12 lg:pb-20">
 
-          <p className="font-mono text-[9px] tracking-[0.2em] text-[#8ce7f5] sm:text-[10px]">
-            COSMOS ENGINE / PROTOTYPE
-          </p>
+          <CelestialAura auraRef={awakeningAuraRef} />
 
-          <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-6xl lg:text-8xl">
+          <div
+            ref={awakeningCopyRef}
+            className="relative z-10"
+          >
 
-            Beyond
-            <br />
+            <p className="font-mono text-[9px] tracking-[0.2em] text-[#8ce7f5] sm:text-[10px]">
+              COSMOS ENGINE / PROTOTYPE
+            </p>
 
-            <span className="text-[#8ce7f5]">
-              the visible.
-            </span>
+            <h1 className="mt-5 font-display text-5xl font-semibold leading-[0.98] tracking-[-0.045em] text-white sm:text-6xl lg:text-8xl">
+              Beyond
+              <br />
+              <span className="text-[#8ce7f5]">
+                the visible.
+              </span>
+            </h1>
 
-          </h1>
+            <p className="mt-6 max-w-lg text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
+              Somewhere beyond the familiar, worlds are
+              waiting to be discovered.
+            </p>
 
-          <p className="mt-6 max-w-lg text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
-            Somewhere beyond the familiar, worlds are
-            waiting to be discovered.
-          </p>
+          </div>
 
         </div>
 
-        {/* Scroll instruction */}
         <div
           ref={scrollCueRef}
-          className="pointer-events-none absolute bottom-8 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-3"
+          className="pointer-events-none absolute bottom-8 left-1/2 z-30 flex -translate-x-1/2 flex-col items-center gap-3"
         >
           <span className="font-mono text-[8px] tracking-[0.24em] text-[#9bb6c1]">
             SCROLL TO TRAVEL
@@ -300,6 +566,7 @@ export default function CosmicPreview() {
           <div className="flex h-9 w-5 justify-center rounded-full border border-cyan-100/30 p-1.5">
             <span className="h-1.5 w-1 rounded-full bg-[#8ce7f5] animate-bounce" />
           </div>
+
         </div>
 
       </section>
@@ -308,53 +575,210 @@ export default function CosmicPreview() {
           CHAPTER 002 — THE APPROACH
       ====================================== */}
 
-      <section
-        ref={approachSectionRef}
-        className="relative min-h-[200vh]"
-      >
+      <section className="relative min-h-[200vh]">
 
         <div className="sticky top-0 flex min-h-screen items-center">
 
-          <div
-            ref={approachCopyRef}
-            className="relative z-20 max-w-2xl px-6 sm:px-9 lg:px-12"
-          >
+          <div className="relative z-20 max-w-2xl px-6 sm:px-9 lg:px-12">
 
-            <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
-              CHAPTER 002 / THE APPROACH
-            </p>
+            <CelestialAura auraRef={approachAuraRef} />
 
-            <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+            <div
+              ref={approachCopyRef}
+              className="relative z-10"
+            >
 
-              A world
-              <br />
-
-              emerges from
-              <br />
-
-              <span className="text-[#8ce7f5]">
-                the dark.
-              </span>
-
-            </h2>
-
-            <p className="mt-7 max-w-md text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
-              We leave the distant starfield behind.
-              A mysterious world grows larger with every
-              passing moment.
-            </p>
-
-            <div className="mt-9 border-l border-cyan-200/35 pl-4">
-
-              <p className="font-mono text-[8px] tracking-[0.17em] text-[#8ce7f5]">
-                DESTINATION / QUAOAR
+              <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
+                CHAPTER 002 / THE APPROACH
               </p>
 
-              <p className="mt-2 max-w-sm text-[10px] leading-6 text-[#8195a5]">
-                A distant Kuiper Belt world.
-                Its detailed surface in this experience
-                is an artistic reconstruction.
+              <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                A world
+                <br />
+                emerges from
+                <br />
+                <span className="text-[#8ce7f5]">
+                  the dark.
+                </span>
+              </h2>
+
+              <p className="mt-7 max-w-md text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
+                We leave the distant starfield behind.
+                A mysterious world grows larger with every
+                passing moment.
               </p>
+
+              <div className="mt-9 border-l border-cyan-200/35 pl-4">
+
+                <p className="font-mono text-[8px] tracking-[0.17em] text-[#8ce7f5]">
+                  DESTINATION / QUAOAR
+                </p>
+
+                <p className="mt-2 max-w-sm text-[10px] leading-6 text-[#8195a5]">
+                  A distant Kuiper Belt world.
+                  Its detailed surface in this experience
+                  is an artistic reconstruction.
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ======================================
+          CHAPTER 003 — THROUGH THE NEBULA
+      ====================================== */}
+
+      <section className="relative min-h-[200vh]">
+
+        <div className="sticky top-0 flex min-h-screen items-center">
+
+          <div className="relative z-20 max-w-2xl px-6 sm:px-9 lg:px-12">
+
+            <CelestialAura auraRef={nebulaAuraRef} />
+
+            <div
+              ref={nebulaCopyRef}
+              className="relative z-10"
+            >
+
+              <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
+                CHAPTER 003 / THROUGH THE NEBULA
+              </p>
+
+              <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                Where stars
+                <br />
+                are born
+                <br />
+                <span className="text-[#8ce7f5]">
+                  in light.
+                </span>
+              </h2>
+
+              <p className="mt-7 max-w-md text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
+                We move through immense structures of
+                interstellar gas and dust, exploring the
+                environments in which stars form.
+              </p>
+
+              <div className="mt-9 border-l border-cyan-200/35 pl-4">
+
+                <p className="font-mono text-[8px] tracking-[0.17em] text-[#8ce7f5]">
+                  ENVIRONMENT / DEEP SPACE
+                </p>
+
+                <p className="mt-2 max-w-sm text-[10px] leading-6 text-[#8195a5]">
+                  A panoramic artistic visualization of
+                  interstellar gas, dust and distant stars,
+                  created for the AstroShift cosmic journey.
+                </p>
+
+                <p className="mt-2 text-[9px] leading-5 text-[#607889]">
+                  Artistic reconstruction — not a direct
+                  astronomical observation.
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ======================================
+          CHAPTER 004 — BEYOND VISIBLE LIGHT
+      ====================================== */}
+
+      <section className="relative min-h-[200vh]">
+
+        <div className="sticky top-0 flex min-h-screen items-center">
+
+          <div className="relative z-20 max-w-3xl px-6 sm:px-9 lg:px-12">
+
+            <CelestialAura auraRef={spectralAuraRef} />
+
+            <div
+              ref={spectralCopyRef}
+              className="relative z-10"
+            >
+
+              <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
+                CHAPTER 004 / BEYOND VISIBLE LIGHT
+              </p>
+
+              <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.05] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                Light beyond
+                <br />
+                what we
+                <br />
+                <span className="text-[#8ce7f5]">
+                  can see.
+                </span>
+              </h2>
+
+              <p className="mt-7 max-w-lg text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
+                The universe carries information beyond
+                the limits of human vision. By separating
+                light into wavelengths, astronomers can
+                uncover clues hidden within stars,
+                galaxies and interstellar clouds.
+              </p>
+
+              <div className="mt-9 border-l border-cyan-200/35 pl-4">
+
+                <p className="font-mono text-[8px] tracking-[0.17em] text-[#8ce7f5]">
+                  MISSION / SPHEREx
+                </p>
+
+                <div className="mt-4 flex flex-wrap items-end gap-x-10 gap-y-4">
+
+                  <div>
+                    <p className="font-display text-4xl font-semibold text-white sm:text-5xl">
+                      102
+                    </p>
+
+                    <p className="mt-1 font-mono text-[8px] tracking-[0.12em] text-[#8ce7f5]">
+                      SPECTRAL CHANNELS
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="font-display text-3xl font-semibold text-white sm:text-4xl">
+                      0.75–5.0
+                    </p>
+
+                    <p className="mt-1 font-mono text-[8px] tracking-[0.12em] text-[#8ce7f5]">
+                      MICROMETRES
+                    </p>
+                  </div>
+
+                </div>
+
+                <div className="mt-6 h-1.5 w-full max-w-md rounded-full bg-gradient-to-r from-violet-500 via-blue-400 via-cyan-300 via-emerald-300 via-yellow-300 via-orange-400 to-rose-500" />
+
+                <div className="mt-2 flex max-w-md justify-between font-mono text-[8px] text-[#8195a5]">
+                  <span>0.75 μm</span>
+                  <span>NEAR-INFRARED</span>
+                  <span>5.0 μm</span>
+                </div>
+
+                <p className="mt-4 max-w-md text-[10px] leading-6 text-[#8195a5]">
+                  Infrared wavelengths represented through
+                  illustrative false colour. The spectral
+                  visualization is artistic, not actual
+                  SPHEREx instrument data.
+                </p>
+
+              </div>
 
             </div>
 
@@ -375,20 +799,21 @@ export default function CosmicPreview() {
         </p>
 
         <p className="mt-3 font-mono text-[9px] text-[#a5dce5]">
-          PROCEDURAL NEBULA
+          PERSISTENT STARFIELD
         </p>
 
         <p className="mt-1 font-mono text-[9px] text-[#718795]">
-          3D PARTICLE ENVIRONMENT
+          SPECTRAL CHANNEL VISUALIZATION
         </p>
 
         <p className="mt-1 font-mono text-[9px] text-[#718795]">
-          PLANETARY RECONSTRUCTION
+          PROCEDURAL DUST &amp; GAS
         </p>
 
       </div>
 
-      {/* Return navigation */}
+      {/* RETURN NAVIGATION */}
+
       <Link
         to="/"
         className="fixed bottom-7 left-6 z-40 inline-flex items-center gap-3 rounded-full border border-cyan-200/25 bg-[#09131e]/70 px-4 py-3 font-mono text-[8px] tracking-[0.14em] text-[#a5edf5] backdrop-blur-md transition duration-300 hover:border-cyan-200/50 hover:bg-cyan-200/[0.12] sm:left-9 lg:left-12"
