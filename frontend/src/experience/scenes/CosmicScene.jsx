@@ -1,5 +1,4 @@
-
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -10,10 +9,15 @@ import DistantNebula from "../effects/DistantNebula";
 import InterstellarDustField from "../effects/InterstellarDustField";
 import SpectralTunnel from "../effects/SpectralTunnel";
 import SpectralReveal from "../effects/SpectralReveal";
+import TemporalEchoField from "../effects/TemporalEchoField";
+import ObservatoryScene from "./ObservatoryScene";
 
 import PlanetBody from "../components/PlanetBody";
 
-// Actual section boundaries of the 700vh journey.
+// ==========================================
+// ORIGINAL FOUR-CHAPTER CAMERA THRESHOLDS
+// ==========================================
+
 const APPROACH_END_PROGRESS = 0.5;
 const NEBULA_END_PROGRESS = 5 / 6;
 
@@ -83,23 +87,204 @@ const spectralLookPath = new THREE.CatmullRomCurve3([
 ]);
 
 // ==========================================
+// CHAPTER 005 — THE SKY REMEMBERS
+// ==========================================
+
+const chapterFiveCameraPath = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, 0, -1850),
+  new THREE.Vector3(0.5, 0.2, -1980),
+  new THREE.Vector3(-5, 1, -2180),
+  new THREE.Vector3(8, -2, -2400),
+  new THREE.Vector3(0, 0, -2720),
+]);
+
+const chapterFiveLookPath = new THREE.CatmullRomCurve3([
+  new THREE.Vector3(0, 0, -2100),
+  new THREE.Vector3(0, 0, -2240),
+  new THREE.Vector3(-2, 0, -2440),
+  new THREE.Vector3(0, 0, -2650),
+  new THREE.Vector3(0, 0, -2940),
+]);
+
+// ==========================================
+// CHAPTER 006 — THE FINAL ORBIT
+// ==========================================
+
+// Keep the first Chapter 006 frame identical to the Chapter 005 handoff.
+// A very short opening glide moves into a tight view of ASTRA-01's optical
+// instrument end. The main move then physically dollies backward, revealing
+// the spacecraft and finally the Earth. No lens-only zoom is used.
+const CHAPTER_SIX_CLOSE_APPROACH_END = 0.075;
+const CHAPTER_SIX_WIDE_REVEAL_END = 0.82;
+
+const chapterSixHandoffCamera = new THREE.Vector3(0, 0, -2720);
+const chapterSixHandoffLook = new THREE.Vector3(0, 0, -2940);
+
+// Close framing: the upper optical assembly and nearby spacecraft structure
+// fill the view; the solar arrays are intentionally outside the first frame.
+const chapterSixCloseCamera = new THREE.Vector3(0, 150, -3480);
+const chapterSixCloseLook = new THREE.Vector3(0, 98, -3700);
+
+const chapterSixOpeningCameraPath = new THREE.CatmullRomCurve3([
+  chapterSixHandoffCamera,
+  new THREE.Vector3(0, 66, -3090),
+  chapterSixCloseCamera,
+]);
+
+const chapterSixOpeningLookPath = new THREE.CatmullRomCurve3([
+  chapterSixHandoffLook,
+  new THREE.Vector3(0, 48, -3340),
+  chapterSixCloseLook,
+]);
+
+// The camera now retreats on its own world-space path. The target gradually
+// shifts from ASTRA-01 toward the Earth to form the final wide composition.
+const chapterSixPullbackCameraPath = new THREE.CatmullRomCurve3([
+  chapterSixCloseCamera,
+  new THREE.Vector3(0, 210, -3270),
+  new THREE.Vector3(0, 190, -2760),
+  new THREE.Vector3(0, 140, -2200),
+]);
+
+const chapterSixPullbackLookPath = new THREE.CatmullRomCurve3([
+  chapterSixCloseLook,
+  new THREE.Vector3(0, 20, -4200),
+  new THREE.Vector3(0, -920, -5050),
+  new THREE.Vector3(0, -1740, -5850),
+]);
+
+// ==========================================
+// ENVIRONMENT OWNERSHIP
+// ==========================================
+
+function LegacyEnvironmentGate({
+  chapterFiveProgressRef,
+  chapterSixProgressRef,
+  chapterFiveActiveRef,
+  chapterSixActiveRef,
+  children,
+}) {
+  const groupRef = useRef(null);
+
+  useFrame(() => {
+    if (!groupRef.current) return;
+
+    const chapterFiveOwnsScene =
+      Boolean(chapterFiveActiveRef?.current) ||
+      (chapterFiveProgressRef?.current ?? 0) > 0.0001;
+
+    const chapterSixOwnsScene =
+      Boolean(chapterSixActiveRef?.current) ||
+      (chapterSixProgressRef?.current ?? 0) > 0.0001;
+
+    // The original starfield / nebula / Quaoar environment belongs
+    // to Chapters 001–004 only. It must not remain behind Chapters 005–006.
+    groupRef.current.visible =
+      !chapterFiveOwnsScene && !chapterSixOwnsScene;
+  });
+
+  return <group ref={groupRef}>{children}</group>;
+}
+
+// ==========================================
 // CINEMATIC CAMERA
 // ==========================================
 
-function CinematicCamera({ progressRef }) {
-  const lookTarget = useMemo(
-    () => new THREE.Vector3(),
-    []
-  );
+function CinematicCamera({
+  progressRef,
+  chapterFiveProgressRef,
+  chapterSixProgressRef,
+  chapterFiveActiveRef,
+  chapterSixActiveRef,
+}) {
+  const lookTarget = useMemo(() => new THREE.Vector3(), []);
 
   useFrame(({ camera }) => {
     const progress = THREE.MathUtils.clamp(
-      progressRef.current,
+      progressRef?.current ?? 0,
       0,
       1
     );
 
-    if (progress <= APPROACH_END_PROGRESS) {
+    const chapterFiveProgress = THREE.MathUtils.clamp(
+      chapterFiveProgressRef?.current ?? 0,
+      0,
+      1
+    );
+
+    const chapterSixProgress = THREE.MathUtils.clamp(
+      chapterSixProgressRef?.current ?? 0,
+      0,
+      1
+    );
+
+    // Active flags matter at progress 0: a new chapter must own the
+    // camera on its first frame, before its progress tween advances.
+    // Progress fallbacks keep the final frame stable at each endpoint.
+    const chapterFiveIsActive =
+      Boolean(chapterFiveActiveRef?.current) ||
+      chapterFiveProgress > 0.0001;
+
+    const chapterSixIsActive =
+      Boolean(chapterSixActiveRef?.current) ||
+      chapterSixProgress > 0.0001;
+
+    if (chapterSixIsActive) {
+      if (chapterSixProgress <= CHAPTER_SIX_CLOSE_APPROACH_END) {
+        // Preserve the exact Chapter 005 handoff, then glide closer for a
+        // brief, tight opening shot. This avoids a camera-position snap.
+        const approachProgress = THREE.MathUtils.clamp(
+          chapterSixProgress / CHAPTER_SIX_CLOSE_APPROACH_END,
+          0,
+          1
+        );
+        const approachEase =
+          0.5 - 0.5 * Math.cos(Math.PI * approachProgress);
+
+        chapterSixOpeningCameraPath.getPoint(
+          approachEase,
+          camera.position
+        );
+        chapterSixOpeningLookPath.getPoint(
+          approachEase,
+          lookTarget
+        );
+      } else {
+        // Most of the chapter is a slow physical dolly-out. The camera is
+        // independent of ASTRA-01's orbit and reaches the wide frame at 82%.
+        const revealProgress = THREE.MathUtils.clamp(
+          (chapterSixProgress - CHAPTER_SIX_CLOSE_APPROACH_END) /
+            (CHAPTER_SIX_WIDE_REVEAL_END - CHAPTER_SIX_CLOSE_APPROACH_END),
+          0,
+          1
+        );
+        const revealEase =
+          0.5 - 0.5 * Math.cos(Math.PI * revealProgress);
+
+        chapterSixPullbackCameraPath.getPoint(
+          revealEase,
+          camera.position
+        );
+        chapterSixPullbackLookPath.getPoint(
+          revealEase,
+          lookTarget
+        );
+      }
+    } else if (chapterFiveIsActive) {
+      const travelProgress =
+        0.5 -
+        0.5 * Math.cos(Math.PI * chapterFiveProgress);
+
+      chapterFiveCameraPath.getPointAt(
+        travelProgress,
+        camera.position
+      );
+
+      chapterFiveLookPath.getPointAt(
+        travelProgress,
+        lookTarget
+      );
+    } else if (progress <= APPROACH_END_PROGRESS) {
       const localProgress =
         progress / APPROACH_END_PROGRESS;
 
@@ -112,7 +297,6 @@ function CinematicCamera({ progressRef }) {
         localProgress,
         lookTarget
       );
-
     } else if (progress <= NEBULA_END_PROGRESS) {
       const localProgress =
         (progress - APPROACH_END_PROGRESS) /
@@ -120,9 +304,7 @@ function CinematicCamera({ progressRef }) {
 
       const travelProgress =
         0.5 -
-        0.5 * Math.cos(
-          Math.PI * localProgress
-        );
+        0.5 * Math.cos(Math.PI * localProgress);
 
       flybyCameraPath.getPointAt(
         travelProgress,
@@ -133,7 +315,6 @@ function CinematicCamera({ progressRef }) {
         travelProgress,
         lookTarget
       );
-
     } else {
       const localProgress =
         (progress - NEBULA_END_PROGRESS) /
@@ -141,9 +322,7 @@ function CinematicCamera({ progressRef }) {
 
       const travelProgress =
         0.5 -
-        0.5 * Math.cos(
-          Math.PI * localProgress
-        );
+        0.5 * Math.cos(Math.PI * localProgress);
 
       spectralCameraPath.getPointAt(
         travelProgress,
@@ -166,13 +345,16 @@ function CinematicCamera({ progressRef }) {
 // COMPLETE COSMIC ENVIRONMENT
 // ==========================================
 
-export default function CosmicScene({ progressRef }) {
+export default function CosmicScene({
+  progressRef,
+  chapterFiveProgressRef,
+  chapterSixProgressRef,
+  chapterFiveActiveRef,
+  chapterSixActiveRef,
+}) {
   return (
     <>
-      <color
-        attach="background"
-        args={["#03020b"]}
-      />
+      <color attach="background" args={["#03020b"]} />
 
       <ambientLight
         intensity={0.38}
@@ -191,45 +373,60 @@ export default function CosmicScene({ progressRef }) {
         color="#5572ac"
       />
 
-      {/* Original persistent dark-violet environment */}
-      <NebulaBackdrop progressRef={progressRef} />
+      {/* Chapters 001–004: original environment, explicitly gated. */}
+      <LegacyEnvironmentGate
+        chapterFiveProgressRef={chapterFiveProgressRef}
+        chapterSixProgressRef={chapterSixProgressRef}
+        chapterFiveActiveRef={chapterFiveActiveRef}
+        chapterSixActiveRef={chapterSixActiveRef}
+      >
+        <NebulaBackdrop progressRef={progressRef} />
 
-      {/* Original moving star layers */}
-      <StarFieldLayers />
+        <StarFieldLayers />
 
-      {/* Extended background star coverage */}
-      <PersistentStarfield
-        progressRef={progressRef}
+        <PersistentStarfield
+          progressRef={progressRef}
+        />
+
+        <DistantNebula
+          progressRef={progressRef}
+        />
+
+        <InterstellarDustField
+          progressRef={progressRef}
+        />
+
+        <SpectralTunnel
+          progressRef={progressRef}
+        />
+
+        <SpectralReveal
+          progressRef={progressRef}
+        />
+
+        <PlanetBody
+          position={[16, -2, -55]}
+        />
+      </LegacyEnvironmentGate>
+
+      {/* Chapter 005 — independent image-led temporal environment. */}
+      <TemporalEchoField
+        progressRef={chapterFiveProgressRef}
+        exitProgressRef={chapterSixProgressRef}
       />
 
-      {/* Distant irregular nebula */}
-      <DistantNebula
-        progressRef={progressRef}
-      />
-
-      {/* Cosmic dust along the flight path */}
-      <InterstellarDustField
-        progressRef={progressRef}
-      />
-
-      {/* Scene 004 — spectral curtains */}
-      <SpectralTunnel
-        progressRef={progressRef}
-      />
-
-      {/* Scene 004 — new celestial structure emerging
-          beyond the spectral curtains */}
-      <SpectralReveal
-        progressRef={progressRef}
-      />
-
-      {/* Existing Quaoar. Completely unchanged. */}
-      <PlanetBody
-        position={[16, -2, -55]}
-      />
-
+      {/* Update the camera before the scene positions its camera-facing transition plates. */}
       <CinematicCamera
         progressRef={progressRef}
+        chapterFiveProgressRef={chapterFiveProgressRef}
+        chapterSixProgressRef={chapterSixProgressRef}
+        chapterFiveActiveRef={chapterFiveActiveRef}
+        chapterSixActiveRef={chapterSixActiveRef}
+      />
+
+      {/* Chapter 006 — real ASTRA-01 exterior and observatory transition. */}
+      <ObservatoryScene
+        progressRef={chapterSixProgressRef}
       />
     </>
   );

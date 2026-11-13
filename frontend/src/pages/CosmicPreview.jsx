@@ -45,17 +45,33 @@ export default function CosmicPreview() {
   const approachCopyRef = useRef(null);
   const nebulaCopyRef = useRef(null);
   const spectralCopyRef = useRef(null);
+  const chapterFiveCopyRef = useRef(null);
+  const chapterSixIntroRef = useRef(null);
+  const chapterSixFinalRef = useRef(null);
+  const chapterSixFadeRef = useRef(null);
+  const environmentMetaRef = useRef(null);
+  const returnNavigationRef = useRef(null);
 
   // Chapter energy fields
   const awakeningAuraRef = useRef(null);
   const approachAuraRef = useRef(null);
   const nebulaAuraRef = useRef(null);
   const spectralAuraRef = useRef(null);
+  const chapterFiveAuraRef = useRef(null);
 
   const scrollCueRef = useRef(null);
+  const chapterFiveSectionRef = useRef(null);
+  const chapterSixSectionRef = useRef(null);
 
   // Shared with the Three.js camera.
   const progressRef = useRef(0);
+  const chapterFiveProgressRef = useRef(0);
+  const chapterSixProgressRef = useRef(0);
+
+  // Explicit ownership avoids falling back to the previous camera
+  // path during the first frame of a chapter or at a chapter boundary.
+  const chapterFiveActiveRef = useRef(false);
+  const chapterSixActiveRef = useRef(false);
 
   // ======================================
   // LENIS + MASTER CINEMATIC TIMELINE
@@ -148,6 +164,34 @@ export default function CosmicPreview() {
         filter: "blur(28px)",
       });
 
+      gsap.set(chapterFiveCopyRef.current, {
+        autoAlpha: 0,
+        y: 42,
+        filter: "blur(14px)",
+      });
+
+      gsap.set(chapterFiveAuraRef.current, {
+        autoAlpha: 0,
+        scale: 0.76,
+        filter: "blur(32px)",
+      });
+
+      gsap.set(chapterSixIntroRef.current, {
+        autoAlpha: 0,
+        y: 38,
+        filter: "blur(12px)",
+      });
+
+      gsap.set(chapterSixFinalRef.current, {
+        autoAlpha: 0,
+        y: 22,
+        filter: "blur(10px)",
+      });
+
+      gsap.set(chapterSixFadeRef.current, {
+        autoAlpha: 0,
+      });
+
       // ======================================
       // MASTER SCROLL TIMELINE
       // ======================================
@@ -160,7 +204,8 @@ export default function CosmicPreview() {
         scrollTrigger: {
           trigger: root,
           start: "top top",
-          end: "bottom bottom",
+          // Preserve the original 600vh scroll span for Chapters 001–004.
+          end: () => "+=" + window.innerHeight * 6,
           scrub: prefersReducedMotion ? true : 0.45,
           invalidateOnRefresh: true,
         },
@@ -403,6 +448,222 @@ export default function CosmicPreview() {
         0.10
       );
 
+
+      // ======================================
+      // CHAPTER 005 — THE SKY REMEMBERS
+      // ======================================
+
+      // This independent controller starts after the original 700vh
+      // four-chapter layout. The first timeline above keeps its original
+      // 600vh scroll distance, so Chapters 001–004 are not retimed.
+      const chapterFiveState = { progress: 0 };
+
+      const chapterFiveTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: chapterFiveSectionRef.current,
+          start: "top top",
+
+          // Chapter 005 owns the complete 200vh section. Its sticky
+          // copy exits during the second half while the camera continues
+          // through the nebula toward the Chapter 006 hand-off.
+          end: "bottom top",
+
+          scrub: prefersReducedMotion ? true : 0.45,
+          invalidateOnRefresh: true,
+
+          onToggle: (self) => {
+            chapterFiveActiveRef.current = self.isActive;
+          },
+
+          onRefresh: (self) => {
+            chapterFiveActiveRef.current = self.isActive;
+          },
+        },
+      });
+
+      chapterFiveTimeline.to(
+        chapterFiveState,
+        {
+          progress: 1,
+          duration: 1,
+          ease: "none",
+          onUpdate: () => {
+            chapterFiveProgressRef.current =
+              chapterFiveState.progress;
+          },
+        },
+        0
+      );
+
+      chapterFiveTimeline.fromTo(
+        chapterFiveAuraRef.current,
+        {
+          autoAlpha: 0,
+          scale: 0.76,
+          filter: "blur(32px)",
+        },
+        {
+          autoAlpha: 0.25,
+          scale: 1,
+          filter: "blur(16px)",
+          duration: 0.15,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.10
+      );
+
+      chapterFiveTimeline.fromTo(
+        chapterFiveCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: 42,
+          filter: "blur(14px)",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.12,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.22
+      );
+
+      chapterFiveTimeline.to(
+        chapterFiveCopyRef.current,
+        {
+          autoAlpha: 0,
+          y: -32,
+          filter: "blur(9px)",
+          duration: 0.075,
+          ease: "none",
+        },
+        0.40
+      );
+
+      chapterFiveTimeline.to(
+        chapterFiveAuraRef.current,
+        {
+          autoAlpha: 0.035,
+          scale: 1.12,
+          filter: "blur(29px)",
+          duration: 0.085,
+          ease: "none",
+        },
+        0.42
+      );
+
+      // ======================================
+      // CHAPTER 006 — THE FINAL ORBIT
+      // ======================================
+
+      // Independent 200vh controller: Chapters 001–005 keep their
+      // original timing while the final chapter receives its own camera path.
+      const chapterSixState = { progress: 0 };
+
+      const chapterSixTimeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: chapterSixSectionRef.current,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: prefersReducedMotion ? true : 0.45,
+          invalidateOnRefresh: true,
+
+          onToggle: (self) => {
+            chapterSixActiveRef.current = self.isActive;
+          },
+
+          onRefresh: (self) => {
+            chapterSixActiveRef.current = self.isActive;
+          },
+        },
+      });
+
+      chapterSixTimeline.to(
+        chapterSixState,
+        {
+          progress: 1,
+          duration: 1,
+          ease: "none",
+          onUpdate: () => {
+            chapterSixProgressRef.current = chapterSixState.progress;
+          },
+        },
+        0
+      );
+
+      chapterSixTimeline.fromTo(
+        chapterSixIntroRef.current,
+        {
+          autoAlpha: 0,
+          y: 38,
+          filter: "blur(12px)",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.12,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.15
+      );
+
+      chapterSixTimeline.to(
+        chapterSixIntroRef.current,
+        {
+          autoAlpha: 0,
+          y: -26,
+          filter: "blur(8px)",
+          duration: 0.09,
+          ease: "none",
+        },
+        0.66
+      );
+
+      // The final wide composition holds before the scene fades to black.
+      // The closing title remains above the veil as the visual world disappears.
+      chapterSixTimeline.to(
+        chapterSixFadeRef.current,
+        {
+          autoAlpha: 1,
+          duration: 0.10,
+          ease: "none",
+        },
+        0.90
+      );
+
+      chapterSixTimeline.to(
+        [environmentMetaRef.current, returnNavigationRef.current],
+        {
+          autoAlpha: 0,
+          duration: 0.08,
+          ease: "none",
+        },
+        0.90
+      );
+
+      chapterSixTimeline.fromTo(
+        chapterSixFinalRef.current,
+        {
+          autoAlpha: 0,
+          y: 22,
+          filter: "blur(10px)",
+        },
+        {
+          autoAlpha: 1,
+          y: 0,
+          filter: "blur(0px)",
+          duration: 0.08,
+          ease: "none",
+          immediateRender: false,
+        },
+        0.92
+      );
+
     }, root);
 
     ScrollTrigger.refresh();
@@ -420,13 +681,18 @@ export default function CosmicPreview() {
       }
 
       progressRef.current = 0;
+      chapterFiveProgressRef.current = 0;
+      chapterSixProgressRef.current = 0;
+
+      chapterFiveActiveRef.current = false;
+      chapterSixActiveRef.current = false;
     };
   }, []);
 
   return (
     <main
       ref={journeyRef}
-      className="relative isolate min-h-[700vh] w-full overflow-clip bg-[#02030a] text-white"
+      className="relative isolate min-h-[1200vh] w-full overflow-clip bg-[#02030a] text-white"
     >
 
       {/* ======================================
@@ -442,7 +708,7 @@ export default function CosmicPreview() {
             position: [0, 0, 5],
             fov: 65,
             near: 0.1,
-            far: 2600,
+            far: 11000,
           }}
           dpr={[1, 1.5]}
           gl={{
@@ -461,6 +727,10 @@ export default function CosmicPreview() {
         >
           <CosmicScene
             progressRef={progressRef}
+            chapterFiveProgressRef={chapterFiveProgressRef}
+            chapterSixProgressRef={chapterSixProgressRef}
+            chapterFiveActiveRef={chapterFiveActiveRef}
+            chapterSixActiveRef={chapterSixActiveRef}
           />
         </Canvas>
       </div>
@@ -789,10 +1059,154 @@ export default function CosmicPreview() {
       </section>
 
       {/* ======================================
+          CHAPTER 005 — THE CHANGING SKY
+      ====================================== */}
+
+      <section
+        ref={chapterFiveSectionRef}
+        className="relative min-h-[200vh]"
+      >
+
+        <div className="sticky top-0 flex min-h-screen items-center">
+
+          <div className="relative z-20 max-w-3xl px-6 sm:px-9 lg:px-12">
+
+            <CelestialAura auraRef={chapterFiveAuraRef} />
+
+            <div
+              ref={chapterFiveCopyRef}
+              className="relative z-10"
+            >
+
+              <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
+                CHAPTER 005 / THE CHANGING SKY
+              </p>
+
+              <p className="mt-3 font-mono text-[8px] tracking-[0.2em] text-[#b8a5ff]">
+                TEMPORAL STUDY / THE SKY REMEMBERS
+              </p>
+
+              <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                The sky
+                <br />
+                remembers
+                <br />
+                <span className="text-[#b8dfff]">everything.</span>
+              </h2>
+
+              <p className="mt-7 max-w-lg text-xs leading-7 text-[#a5b4c1] sm:text-sm sm:leading-8">
+                Across the dark, light leaves echoes of what came before.
+                We move between luminous layers of memory, where every
+                moment becomes another trace in the universe.
+              </p>
+
+              <div className="mt-9 border-l border-violet-200/35 pl-4">
+
+                <p className="font-mono text-[8px] tracking-[0.17em] text-[#b8a5ff]">
+                  EXPERIENCE / TEMPORAL ECHO FIELD
+                </p>
+
+                <p className="mt-2 max-w-sm text-[10px] leading-6 text-[#8195a5]">
+                  PAST / PRESENT / ECHO
+                </p>
+
+                <p className="mt-2 max-w-md text-[10px] leading-6 text-[#8195a5]">
+                  Artistic reconstruction — an imaginative visualization
+                  of cosmic time, not an astronomical observation.
+                </p>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </section>
+
+      {/* ======================================
+          CHAPTER 006 — THE FINAL ORBIT
+      ====================================== */}
+
+      <section
+        ref={chapterSixSectionRef}
+        className="relative min-h-[300vh]"
+      >
+        <div className="sticky top-0 flex min-h-screen items-center">
+          <div
+            ref={chapterSixFadeRef}
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-10 bg-[#02030a] opacity-0"
+          />
+
+          <div className="relative z-20 w-full px-6 sm:px-9 lg:px-12">
+
+            <div className="relative max-w-xl">
+              <div
+                ref={chapterSixIntroRef}
+                className="relative z-10 max-w-lg"
+              >
+                <p className="font-mono text-[9px] tracking-[0.22em] text-[#8ce7f5] sm:text-[10px]">
+                  CHAPTER 006 / THE FINAL ORBIT
+                </p>
+
+                <p className="mt-3 font-mono text-[8px] tracking-[0.2em] text-[#b8a5ff]">
+                  ASTRA-01 / ORBITAL OBSERVATORY
+                </p>
+
+                <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                  A final view
+                  <br />
+                  <span className="text-[#a9dfff]">of Earth.</span>
+                </h2>
+
+                <p className="mt-7 max-w-md text-xs leading-7 text-[#b6c4d3] sm:text-sm sm:leading-8">
+                  ASTRA-01 settles into its quiet orbit. The camera draws back,
+                  and the journey comes gently to rest.
+                </p>
+              </div>
+            </div>
+
+            <div
+              ref={chapterSixFinalRef}
+              className="pointer-events-auto absolute inset-x-6 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center text-center sm:inset-x-12"
+            >
+              <p className="font-mono text-[9px] tracking-[0.28em] text-[#9edcf5]">
+                ASTROSHIFT / MISSION LOG 006
+              </p>
+
+              <h2 className="mt-6 font-display text-4xl font-semibold leading-[1.02] tracking-[-0.045em] text-white sm:text-6xl lg:text-7xl">
+                Look
+                <br />
+                <span className="text-[#b8dfff]">beyond.</span>
+              </h2>
+
+              <p className="mt-5 font-mono text-[9px] tracking-[0.2em] text-[#a5b4c1]">
+                THE JOURNEY CONTINUES
+              </p>
+
+              <Link
+                to="/"
+                className="mt-9 inline-flex items-center gap-3 rounded-full border border-cyan-100/35 bg-[#07111e]/75 px-7 py-4 font-mono text-[9px] font-semibold tracking-[0.18em] text-[#d7f4ff] shadow-[0_0_36px_rgba(74,168,255,0.12)] backdrop-blur-xl transition duration-300 hover:border-cyan-100/70 hover:bg-cyan-100/[0.12] hover:shadow-[0_0_46px_rgba(74,168,255,0.25)]"
+              >
+                RETURN TO ASTROSHIFT
+                <span aria-hidden="true">→</span>
+              </Link>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ======================================
           ENVIRONMENT METADATA
       ====================================== */}
 
-      <div className="pointer-events-none fixed bottom-8 right-8 z-30 hidden text-right md:block">
+      <div
+        ref={environmentMetaRef}
+        className="pointer-events-none fixed bottom-8 right-8 z-30 hidden text-right md:block"
+      >
 
         <p className="font-mono text-[8px] tracking-[0.17em] text-[#718795]">
           COSMIC ENVIRONMENT
@@ -815,6 +1229,7 @@ export default function CosmicPreview() {
       {/* RETURN NAVIGATION */}
 
       <Link
+        ref={returnNavigationRef}
         to="/"
         className="fixed bottom-7 left-6 z-40 inline-flex items-center gap-3 rounded-full border border-cyan-200/25 bg-[#09131e]/70 px-4 py-3 font-mono text-[8px] tracking-[0.14em] text-[#a5edf5] backdrop-blur-md transition duration-300 hover:border-cyan-200/50 hover:bg-cyan-200/[0.12] sm:left-9 lg:left-12"
       >

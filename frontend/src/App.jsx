@@ -15,9 +15,13 @@ import Observatory from "./pages/Observatory";
 import ScienceLab from "./pages/ScienceLab";
 import AstroBotWorkspace from "./pages/AstroBotWorkspace";
 
-// Load the heavy 3D environment only when requested.
+// Load the heavy 3D environments only when requested.
 const CosmicPreview = lazy(
   () => import("./pages/CosmicPreview")
+);
+
+const Astra01Preview = lazy(
+  () => import("./pages/Astra01Preview")
 );
 
 function App() {
@@ -66,6 +70,22 @@ function App() {
             }
           >
             <CosmicPreview />
+          </Suspense>
+        }
+      />
+
+      {/* ASTRA-01 — temporary 3D model inspection */}
+      <Route
+        path="/astra-01-preview"
+        element={
+          <Suspense
+            fallback={
+              <div className="flex min-h-screen items-center justify-center bg-[#020711] font-mono text-xs tracking-[0.2em] text-[#8ce7f5]">
+                INITIALIZING ASTRA-01 MODEL...
+              </div>
+            }
+          >
+            <Astra01Preview />
           </Suspense>
         }
       />

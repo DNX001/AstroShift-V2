@@ -1,0 +1,46 @@
+ASTRA-01 CINEMATIC V3 — GLB EXPORT REPORT
+==========================================
+Source Blender project: C:\Users\Debjyoti\Downloads\AstroShift-V2\design\ASTRA-01\source\astra-01-cinematic-v3.blend
+Output GLB: C:\Users\Debjyoti\Downloads\AstroShift-V2\design\ASTRA-01\exports\astra-01-cinematic-v3.glb
+
+EXPORT SUMMARY
+Visible mesh objects selected: 404
+Hidden/replaced mesh objects excluded: 13
+GLB file size: 5,960,052 bytes (5.68 MiB)
+GLB container version: 2
+glTF asset version: 2.0
+glTF nodes: 404
+glTF meshes: 404
+glTF materials: 12
+glTF textures: 0
+glTF images: 0
+glTF scenes: 1
+SHA-256: e7e80de671d9c9adec45f7a67d7e6cf0d5f410e443b7b327b59b17fc8ec24ad0
+
+WORLD-SPACE BOUNDS
+Minimum: (-10.15000, -2.19600, -3.50900)
+Maximum: (10.15000, 2.71700, 8.39000)
+Dimensions: (20.30000, 4.91300, 11.89900)
+
+EXCLUDED HIDDEN MESH OBJECTS
+- COMMUNICATIONS_ANTENNA_BOOM
+- COMMUNICATIONS_ANTENNA_BOOM.001
+- COMMUNICATIONS_DISH
+- COMMUNICATIONS_DISH_FEED
+- COMMUNICATIONS_SENSOR_HEAD
+- COMMUNICATIONS_SENSOR_HEAD.001
+- DISH_SUPPORT_ARM
+- HIGH_GAIN_DISH_FEED_HORN
+- HIGH_GAIN_DISH_FEED_SUPPORT_01
+- HIGH_GAIN_DISH_FEED_SUPPORT_02
+- HIGH_GAIN_DISH_FEED_SUPPORT_03
+- HIGH_GAIN_DISH_FEED_SUPPORT_04
+- HIGH_GAIN_DISH_PRECISION_RIM
+
+VALIDATION
+- GLB magic header: PASS
+- GLB version 2: PASS
+- GLB declared file length: PASS
+- GLB JSON chunk: PASS
+- glTF asset version 2.0: PASS
+- Source Blender project saved/overwritten: NO
